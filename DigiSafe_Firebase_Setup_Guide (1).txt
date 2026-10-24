@@ -1,0 +1,79 @@
+DIGISAFE – VISITOR REVIEWS SETUP GUIDE
+
+What has been changed 1. Visitors can submit name, star rating, review
+and optional uploaded photo. 2. Every new review is saved as “pending”.
+3. Only approved reviews are displayed publicly. 4. Admin can log in,
+view reviews, approve, reject or delete them. 5. Visitor photos are
+resized in the browser before being stored. 6. If Firebase is not
+connected, the page shows a local-demo warning. It does NOT send visitor
+reviews to you until Firebase is configured.
+
+STEP 1 – Create Firebase project 1. Open Firebase Console:
+https://console.firebase.google.com/ 2. Click “Create a project”. 3.
+Give it a name such as DigiSafe. 4. Finish the project creation.
+
+STEP 2 – Add a Web App 1. In your Firebase project, click the Web icon
+(</>). 2. Register an app, e.g. “DigiSafe Website”. 3. Firebase will
+show a firebaseConfig object. 4. Open DigiSafe_with_Photo_Feedback.html
+in a text/code editor. 5. Find the section: const firebaseConfig = { 6.
+Replace the placeholder values with the values from Firebase.
+
+STEP 3 – Enable Authentication 1. Firebase Console → Build →
+Authentication. 2. Click Get started. 3. Open Sign-in method. 4. Enable
+“Email/Password”.
+
+STEP 4 – Create your admin account 1. Firebase Console → Authentication
+→ Users. 2. Click “Add user”. 3. Enter your own admin email and a strong
+password. 4. This account is used only for the DigiSafe Admin Review
+Panel.
+
+STEP 5 – Create Firestore Database 1. Firebase Console → Build →
+Firestore Database. 2. Click Create database. 3. Choose the location
+requested by Firebase. 4. Start with production/security-rules mode if
+offered.
+
+STEP 6 – Add Firestore security rules In Firestore → Rules, use rules
+that allow: - Anyone to create a review only with status “pending”. -
+Anyone to read only reviews whose status is “approved”. - Only your
+admin account to read all reviews and change/delete reviews.
+
+IMPORTANT: The admin UID must be copied from Firebase Authentication →
+Users → your admin account. Replace YOUR_ADMIN_UID below with that exact
+UID.
+
+Suggested Firestore rules:
+
+rules_version = ‘2’; service cloud.firestore { match
+/databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+             && request.auth.uid == "YOUR_ADMIN_UID";
+    }
+
+    match /reviews/{reviewId} {
+      allow create: if request.resource.data.status == "pending"
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.name is string
+                    && request.resource.data.review is string;
+
+      allow read: if resource.data.status == "approved" || isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+} }
+
+STEP 7 – Test 1. Open the website. 2. Upload a profile photo on the
+existing profile/photo page. 3. Open “⭐ Reviews & Feedback”. 4. Submit
+a review. 5. Open “🔐 Admin”. 6. Log in using the Firebase admin
+email/password. 7. The review should appear as Pending. 8. Click
+Approve. 9. Go back to Reviews & Feedback. The approved review should
+now appear publicly.
+
+PRIVACY - A visitor’s photo is NOT automatically shown publicly. - The
+visitor must tick the photo-sharing checkbox. - Even then, the review
+remains Pending until you approve it. - Do not collect unnecessary
+personal information. - Use a strong admin password and never put the
+admin password inside the HTML.
